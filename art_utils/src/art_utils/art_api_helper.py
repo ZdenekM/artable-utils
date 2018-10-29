@@ -3,7 +3,8 @@
 import rospy
 from art_msgs.srv import getProgram, storeProgram, ProgramIdTrigger, getObjectType, getProgramHeaders, storeObjectType,\
     GetCollisionPrimitives, AddCollisionPrimitive, ClearCollisionPrimitives
-from art_msgs.msg import CollisionPrimitive
+from art_msgs.msg import CollisionPrimitive, Program, ProgramHeader, ObjectType
+from typing import List, Any, Tuple
 
 # TODO make brain version a new class (based on ArtApiHelper)
 
@@ -40,6 +41,7 @@ class ArtApiHelper(object):
         self._object_type_cache = {}
 
     def wait_for_db_api(self):
+        # type: () -> None
 
         self.get_prog_srv.wait_for_service()
         self.store_prog_srv.wait_for_service()
@@ -51,6 +53,7 @@ class ArtApiHelper(object):
         self.clear_collision_primitives_srv.wait_for_service()
 
     def wait_for_api(self):
+        # type: () -> None
 
         self.wait_for_db_api()
 
@@ -58,6 +61,7 @@ class ArtApiHelper(object):
             self.start_program_srv.wait_for_service()
 
     def get_collision_primitives(self, setup, names=None):
+        # type: (str, List[str]) -> List[CollisionPrimitive]
 
         assert setup != ""
 
@@ -72,6 +76,7 @@ class ArtApiHelper(object):
         return resp.primitives
 
     def add_collision_primitive(self, primitive):
+        # type: (CollisionPrimitive) -> bool
 
         assert isinstance(primitive, CollisionPrimitive)
 
@@ -83,6 +88,7 @@ class ArtApiHelper(object):
         return resp.success
 
     def clear_collision_primitives(self, setup, names=None):
+        # type: (str, List[str]) -> bool
 
         assert setup != ""
 
@@ -97,6 +103,7 @@ class ArtApiHelper(object):
         return resp.success
 
     def load_program(self, prog_id):
+        # type: (int) -> Any[Program, None]
 
         rospy.loginfo('Loading program: ' + str(prog_id))
 
@@ -111,7 +118,11 @@ class ArtApiHelper(object):
         else:
             return resp.program
 
-    def get_program_headers(self, ids=[]):
+    def get_program_headers(self, ids=None):
+        # type: (List[int]) -> Any[List[ProgramHeader], None]
+
+        if ids is None:
+            ids = []
 
         try:
             resp = self.get_program_headers_srv(ids)
@@ -122,6 +133,7 @@ class ArtApiHelper(object):
         return resp.headers
 
     def store_program(self, prog):
+        # type: (Program) -> bool
 
         try:
             resp = self.store_prog_srv(prog)
@@ -132,6 +144,7 @@ class ArtApiHelper(object):
         return resp.success
 
     def delete_program(self, prog_id):
+        # type: (int) -> Tuple[bool, str]
 
         try:
             resp = self.delete_prog_srv(prog_id)
@@ -142,6 +155,7 @@ class ArtApiHelper(object):
         return resp.success, resp.error
 
     def program_set_ro(self, prog_id):
+        # type: (int) -> Tuple[bool, str]
 
         try:
             resp = self.prog_ro_set_srv(prog_id)
@@ -152,6 +166,7 @@ class ArtApiHelper(object):
         return resp.success, resp.error
 
     def program_clear_ro(self, prog_id):
+        # type: (int) -> Tuple[bool, str]
 
         try:
             resp = self.prog_ro_clear_srv(prog_id)
@@ -162,6 +177,7 @@ class ArtApiHelper(object):
         return resp.success, resp.error
 
     def start_program(self, prog_id):
+        # type: (int) -> Tuple[bool, str]
 
         try:
             resp = self.start_program_srv(prog_id)
@@ -172,6 +188,7 @@ class ArtApiHelper(object):
         return resp.success, resp.error
 
     def get_object_type(self, name):
+        # type: (str) -> Any[None, ObjectType]
 
         if name not in self._object_type_cache:
 
@@ -189,6 +206,7 @@ class ArtApiHelper(object):
         return self._object_type_cache[name]
 
     def store_object_type(self, ot):
+        # type: (ObjectType) -> bool
 
         try:
             resp = self.store_obj_type_srv(ot)
